@@ -61,6 +61,7 @@ public class StudentDBUtil {
 		
 		return students;
 	}
+	
 
 	private void close(Connection myConn, Statement myStmt, ResultSet myRs) {
 			
@@ -112,6 +113,89 @@ public class StudentDBUtil {
 			// Clean up JDBC object
 			close(myConn, myStmt, null);
 			
+		}
+	}
+
+	
+	public Student getStudent(String theStudentId) throws Exception {
+		
+		Student theStudent = null;
+		
+		Connection myConn = null;
+		PreparedStatement myStmt = null;
+		ResultSet myRs = null;
+		int studentId;
+		
+		try {
+			// Convert Id to int
+			studentId = Integer.parseInt(theStudentId);
+			
+			// Get DB connection
+			myConn = dataSource.getConnection();
+			
+			// Create a SQL to get Student
+			String sql = "select * from student Where id=?";
+			
+			// Create prepared statement
+			myStmt = myConn.prepareStatement(sql);
+			
+			//Set parameter
+			myStmt.setInt(1, studentId);
+			
+			// Execute SQL insert
+			myRs = myStmt.executeQuery();
+			
+			/// Retrieve data from result set
+			if(myRs.next()) {
+				String firstName = myRs.getString("first_name");
+				String lastName = myRs.getString("last_name");
+				String email = myRs.getString("email");
+				
+				// Use the studentId during construction
+				theStudent= new Student(studentId, firstName, lastName, email);
+			}
+			else {
+				throw new Exception("Could not find student ID: " + studentId);
+			}
+		}
+		finally {
+			// Clean up JDBC object
+			close(myConn, myStmt, myRs);	
+		}
+		
+		return theStudent;
+	}
+	
+	
+	public void updateStudent(Student theStudent) throws Exception {
+		
+		Connection myConn = null;
+		PreparedStatement myStmt = null;
+
+		try {
+			// get db connection
+			myConn = dataSource.getConnection();
+			
+			// create SQL update statement
+			String sql = "update student "
+						+ "set first_name=?, last_name=?, email=? "
+						+ "where id=?";
+			
+			// prepare statement
+			myStmt = myConn.prepareStatement(sql);
+			
+			// set params
+			myStmt.setString(1, theStudent.getFirstName());
+			myStmt.setString(2, theStudent.getLastName());
+			myStmt.setString(3, theStudent.getEmail());
+			myStmt.setInt(4, theStudent.getId());
+			
+			// execute SQL statement
+			myStmt.execute();
+		}
+		finally {
+			// clean up JDBC objects
+			close(myConn, myStmt, null);
 		}
 	}
 }
